@@ -1,0 +1,63 @@
+data:
+  data_dir: data
+  data_file: example_data.csv
+  columns:
+    # Map parameter names to column names in your CSV
+    parameters:
+      x1: blads            # Number of blades (integer)
+      x2: angle-wrap       # Wrap angle
+      x3: angle-inlet      # Inlet angle
+      x4: angle-outlet     # Outlet angle
+    
+    # Map target variable names to column names
+    targets:
+      y1:
+        column: power     # Power/head objective
+        type: minimize    # We want to minimize power
+      y2:
+        column: efficiency # Efficiency objective 
+        type: maximize    # We want to maximize efficiency
+    
+    # Specify which parameters should be treated as integers
+    integer_parameters:
+      - x1
+
+models:
+  # Configuration for the y1 model (power/head)
+  y1_model:
+    type: random_forest
+    params:
+      n_estimators: 100
+      random_state: 42
+      max_depth: 10
+  
+  # Configuration for the y2 model (efficiency)
+  y2_model:
+    type: random_forest
+    params:
+      n_estimators: 100
+      random_state: 42
+      max_depth: 10
+
+optimization:
+  # Algorithm to use (currently only 'nsga2' is supported)
+  algorithm: nsga2
+  params:
+    pop_size: 200          # Population size
+    n_offsprings: 50       # Number of offspring per generation
+    # n_gen: 200             # Number of generations
+    # seed: 1                # Random seed for reproducibility
+    crossover_prob: 0.9    # Crossover probability
+    crossover_eta: 15      # Crossover distribution index
+    mutation_eta: 20       # Mutation distribution index
+  run_params:
+    n_gen: 200             # Number of generations
+    seed: 42              # Random seed for reproducibility
+    verbose: true         # Whether to show verbose output
+
+
+visualization:
+  dpi: 300                 # DPI for saved figures
+  show_plots: false        # Whether to show plots
+  save_plots: true         # Whether to save plots
+  output_dir: results      # Directory to save results 
