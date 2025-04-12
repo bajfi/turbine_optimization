@@ -1,20 +1,18 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
-from pymoo.algorithms.moo.nsga2 import NSGA2
-from pymoo.operators.crossover.sbx import SBX
-from pymoo.operators.mutation.pm import PM
-from pymoo.operators.sampling.rnd import IntegerRandomSampling
 from pymoo.optimize import minimize
 
+from .algorithms import create_algorithm, get_available_algorithms
 from .problem_definition import TurbineOptimizationProblem
+from .result_handler import OptimizationResultHandler
 
 
 class MultiObjectiveOptimizer:
     """
     Class for performing multi-objective optimization using various algorithms.
-    This class follows the Strategy pattern by allowing different optimization
-    algorithms to be selected at runtime.
+    This class delegates algorithm creation to the AlgorithmFactory,
+    following both the Strategy and Factory patterns.
     """
 
     def __init__(self, problem: TurbineOptimizationProblem):
@@ -25,48 +23,33 @@ class MultiObjectiveOptimizer:
             problem: The optimization problem to solve
         """
         self.problem = problem
-        self.result = None
+        self.result_handler = OptimizationResultHandler()
+        self._last_algorithm_name = None
+        self._last_algorithm_params = None
 
-    def setup_nsga2(
-        self,
-        pop_size: int = 200,
-        n_offsprings: int = 50,
-        crossover_prob: float = 0.9,
-        crossover_eta: float = 15,
-        mutation_eta: float = 20,
-    ) -> NSGA2:
+    def get_available_algorithms(self) -> Dict[str, str]:
         """
-        Setup the NSGA-II algorithm with the specified parameters.
-
-        Args:
-            pop_size: Population size
-            n_offsprings: Number of offspring per generation
-            crossover_prob: Crossover probability
-            crossover_eta: Crossover distribution index
-            mutation_eta: Mutation distribution index
+        Get a list of available optimization algorithms.
 
         Returns:
-            Configured NSGA-II algorithm
+            Dictionary of algorithm identifiers and their descriptive names
         """
-        algorithm = NSGA2(
-            pop_size=pop_size,
-            n_offsprings=n_offsprings,
-            sampling=IntegerRandomSampling(),
-            crossover=SBX(prob=crossover_prob, eta=crossover_eta),
-            mutation=PM(eta=mutation_eta),
-            eliminate_duplicates=True,
-        )
-
-        return algorithm
+        return get_available_algorithms()
 
     def run_optimization(
-        self, algorithm=None, n_gen: int = 200, seed: int = 1, verbose: bool = True
+        self,
+        algorithm_name: str = "nsga2",
+        algorithm_params: Optional[Dict[str, Any]] = None,
+        n_gen: int = 200,
+        seed: int = 1,
+        verbose: bool = True,
     ) -> Dict[str, Any]:
         """
-        Run the optimization algorithm.
+        Run the optimization with the specified algorithm.
 
         Args:
-            algorithm: The optimization algorithm to use (if None, NSGA-II will be used)
+            algorithm_name: Name of the algorithm to use
+            algorithm_params: Parameters for the algorithm setup
             n_gen: Number of generations
             seed: Random seed for reproducibility
             verbose: Whether to print progress information
@@ -74,28 +57,29 @@ class MultiObjectiveOptimizer:
         Returns:
             Dictionary containing optimization results
         """
-        if algorithm is None:
-            algorithm = self.setup_nsga2()
+        # Store algorithm configuration for reference
+        self._last_algorithm_name = algorithm_name
+        self._last_algorithm_params = algorithm_params or {}
+
+        # Create the algorithm instance
+        algorithm_instance = create_algorithm(algorithm_name)
+        algorithm = algorithm_instance.setup(**(algorithm_params or {}))
 
         # Run the optimization
-        self.result = minimize(
+        result = minimize(
             self.problem, algorithm, ("n_gen", n_gen), seed=seed, verbose=verbose
         )
 
-        # Create a more structured result
-        result_dict = {
-            "X": self.result.X,  # Decision variables
-            "F": self.result.F,  # Objective values
-            "algorithm": algorithm.__class__.__name__,
-            "n_gen": n_gen,
-            "n_evals": self.result.algorithm.evaluator.n_eval,
-            "exec_time": self.result.exec_time,
-        }
-
-        return result_dict
+        # Store and process the result
+        self.result_handler.set_result(result)
+        return self.result_handler.create_result_summary(
+            algorithm_instance.get_name(), n_gen
+        )
 
     def get_pareto_solutions(
-        self, parameter_names: List[str] = None, objective_names: List[str] = None
+        self,
+        parameter_names: Optional[List[str]] = None,
+        objective_names: Optional[List[str]] = None,
     ) -> pd.DataFrame:
         """
         Get the Pareto-optimal solutions as a DataFrame.
@@ -106,35 +90,39 @@ class MultiObjectiveOptimizer:
 
         Returns:
             DataFrame containing the Pareto-optimal solutions
+
+        Raises:
+            ValueError: If no optimization has been run yet
         """
-        if self.result is None:
-            raise ValueError(
-                "No optimization has been run yet. Call run_optimization first."
-            )
+        return self.result_handler.get_pareto_solutions(
+            problem=self.problem,
+            parameter_names=parameter_names,
+            objective_names=objective_names,
+        )
 
-        X = self.result.X
-        F = self.result.F
+    def get_best_solution(self, objective_index: int = 0) -> Dict[str, Any]:
+        """
+        Get the best solution for a single objective.
 
-        # Use default names if not provided
-        if parameter_names is None:
-            parameter_names = [f"var_{i}" for i in range(X.shape[1])]
+        Args:
+            objective_index: Index of the objective to optimize
 
-        if objective_names is None:
-            objective_names = [f"obj_{i}" for i in range(F.shape[1])]
+        Returns:
+            Dictionary with the best X and F values
+        """
+        return self.result_handler.get_best_solution(objective_index)
 
-        # Create DataFrame with parameters and objectives
-        data = {}
+    def get_last_configuration(self) -> Dict[str, Any]:
+        """
+        Get the configuration used in the last optimization run.
 
-        # Add parameters
-        for i, name in enumerate(parameter_names):
-            # Handle integer variables
-            if i in getattr(self.problem, "integer_vars", []):
-                data[name] = [int(round(x[i])) for x in X]
-            else:
-                data[name] = [x[i] for x in X]
+        Returns:
+            Dictionary with algorithm configuration
+        """
+        if self._last_algorithm_name is None:
+            return {}
 
-        # Add objectives
-        for i, name in enumerate(objective_names):
-            data[name] = [f[i] for f in F]
-
-        return pd.DataFrame(data)
+        return {
+            "algorithm": self._last_algorithm_name,
+            "parameters": self._last_algorithm_params,
+        }

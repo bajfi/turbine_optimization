@@ -1,6 +1,6 @@
 # Turbine Optimization Framework
 
-A modular and extensible framework for turbine optimization using surrogate modeling and multi-objective optimization techniques. This project follows SOLID principles and design patterns to create a maintainable and expandable optimization system.
+This framework provides tools for optimizing turbine designs using surrogate modeling and multi-objective optimization techniques.
 
 ## Project Structure
 
@@ -154,10 +154,6 @@ models:
       hidden_layers: [64, 32]
       activation: relu
 ```
-
-### Adding New Optimization Algorithms
-
-Similarly, you can extend the optimization algorithms by adding new implementation in `src/optimization/`.
 
 ## Examples
 

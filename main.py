@@ -116,22 +116,17 @@ def main():
 
     # Run optimization
     print("Running optimization...")
-    opt_params = config_manager.get("optimization.params", {})
     optimizer = MultiObjectiveOptimizer(problem)
 
     # Setup algorithm based on configuration
-    algorithm_type = config_manager.get("optimization.algorithm", "nsga2")
-    if algorithm_type.lower() == "nsga2":
-        algorithm = optimizer.setup_nsga2(
-            **opt_params,
-        )
-    else:
-        raise ValueError(f"Unsupported algorithm type: {algorithm_type}")
+    algorithm_name = config_manager.get("optimization.algorithm", "nsga2")
 
     # Run optimization
+    opt_params = config_manager.get("optimization.algorithm_params", {})
     run_params = config_manager.get("optimization.run_params", {})
     results = optimizer.run_optimization(
-        algorithm=algorithm,
+        algorithm_name=algorithm_name,
+        algorithm_params=opt_params,
         **run_params,
     )
 

@@ -157,7 +157,7 @@ class ConfigManager:
 DEFAULT_CONFIG = {
     "data": {
         "data_dir": "data",
-        "data_file": "3.81.csv",
+        "data_file": "example_data.csv",
         # Flexible column mappings
         "columns": {
             # Input parameters (features)
@@ -194,7 +194,12 @@ DEFAULT_CONFIG = {
     },
     "optimization": {
         "algorithm": "nsga2",
-        "params": {"pop_size": 200, "n_offsprings": 50, "n_gen": 200, "seed": 1},
+        "algorithm_params": {
+            "pop_size": 200,
+            "n_offsprings": 50,
+            "n_gen": 200,
+            "seed": 1,
+        },
         # This will be determined automatically from integer_parameters in data.columns
         "integer_vars": [],
     },

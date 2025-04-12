@@ -40,13 +40,11 @@ models:
       max_depth: 10
 
 optimization:
-  # Algorithm to use (currently only 'nsga2' is supported)
+  # Algorithm to use
   algorithm: nsga2
-  params:
+  algorithm_params:
     pop_size: 200          # Population size
     n_offsprings: 50       # Number of offspring per generation
-    # n_gen: 200             # Number of generations
-    # seed: 1                # Random seed for reproducibility
     crossover_prob: 0.9    # Crossover probability
     crossover_eta: 15      # Crossover distribution index
     mutation_eta: 20       # Mutation distribution index
