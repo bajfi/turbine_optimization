@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any, Dict
 
 import numpy as np
@@ -35,6 +36,13 @@ class BaseModel(ABC):
         """
         pass
 
+    @property
+    def default_params(self) -> Dict[str, Any]:
+        """
+        Get the default parameters for the model.
+        """
+        return {}
+
     @abstractmethod
     def get_params(self) -> Dict[str, Any]:
         """
@@ -56,7 +64,7 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def save_model(self, file_path: str) -> None:
+    def save_model(self, file_path: str | Path) -> None:
         """
         Save the model to a file.
 
@@ -66,7 +74,7 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def load_model(self, file_path: str) -> None:
+    def load_model(self, file_path: str | Path) -> None:
         """
         Load the model from a file.
 

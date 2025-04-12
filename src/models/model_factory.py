@@ -1,7 +1,11 @@
-from typing import Type
+from typing import Dict, Type
 
 from .base_model import BaseModel
+from .gradient_boosting import GradientBoostingModel
+from .neural_network import NeuralNetworkModel
 from .random_forest import RandomForestModel
+from .svr import SVRModel
+from .xgboost_model import XGBoostModel
 
 
 class ModelFactory:
@@ -10,8 +14,12 @@ class ModelFactory:
     This follows the Factory pattern to create different model instances.
     """
 
-    _models = {
+    _models: Dict[str, Type[BaseModel]] = {
         "random_forest": RandomForestModel,
+        "gradient_boosting": GradientBoostingModel,
+        "svr": SVRModel,
+        "neural_network": NeuralNetworkModel,
+        "xgboost": XGBoostModel,
         # Add more model types here as they are implemented
     }
 

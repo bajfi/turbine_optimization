@@ -3,33 +3,36 @@ from pathlib import Path
 from typing import Any, Dict, override
 
 import numpy as np
-from sklearn.ensemble import RandomForestRegressor
+import xgboost as xgb
 
 from .base_model import BaseModel
 
 
-class RandomForestModel(BaseModel):
+class XGBoostModel(BaseModel):
     """
-    Random Forest regression model implementation using scikit-learn.
+    XGBoost regression model implementation.
     """
 
     def __init__(self, **kwargs):
         """
-        Initialize the Random Forest model.
+        Initialize the XGBoost model.
 
         Args:
-            n_estimators: Number of trees in the forest
+            n_estimators: Number of gradient boosted trees
+            learning_rate: Boosting learning rate
+            max_depth: Maximum tree depth for base learners
+            objective: Specify the learning task and the corresponding learning objective
             random_state: Random seed for reproducibility
-            **kwargs: Additional parameters to pass to RandomForestRegressor
+            **kwargs: Additional parameters to pass to XGBRegressor
         """
         params = self.default_params
         params.update(kwargs)
-        self.model = RandomForestRegressor(**params)
+        self.model = xgb.XGBRegressor(**params)
 
     @override
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
         """
-        Train the Random Forest model.
+        Train the XGBoost model.
 
         Args:
             X: Feature matrix of shape (n_samples, n_features)
@@ -58,12 +61,17 @@ class RandomForestModel(BaseModel):
         """
         return {
             "n_estimators": 100,
+            "learning_rate": 0.1,
+            "max_depth": 6,
+            "min_child_weight": 1,
+            "subsample": 0.8,
+            "colsample_bytree": 0.8,
+            "gamma": 0,
+            "objective": "reg:squarederror",
             "random_state": 42,
-            "max_depth": 10,
-            "min_samples_split": 2,
-            "min_samples_leaf": 1,
+            "verbosity": 0,
+            "tree_method": "auto",
             "n_jobs": -1,
-            "verbose": 0,
         }
 
     @override
