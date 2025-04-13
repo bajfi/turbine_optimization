@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 import argparse
 import os
-import sys
-
-# Add the project root directory to Python path to allow imports
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from config.config import DEFAULT_CONFIG, ConfigManager, init_config
 

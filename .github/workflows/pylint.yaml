@@ -21,4 +21,7 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Analysing the code with pylint
       run: |
-        pylint --disable=C0114,C0103,W0107,E0611,W0718,R0903,C0115,W0613,R0902,W0201,R0801,R0913,R0914,R0915,C0413 $(git ls-files '*.py')
+        # Set PYTHONPATH to include the project root directory
+        export PYTHONPATH=$PYTHONPATH:$(pwd)
+        # Run pylint from the root directory
+        cd $(pwd) && pylint --disable=C0114,C0103,W0107,E0611,W0718,R0903,C0115,W0613,R0902,W0201,R0801,R0913,R0914,R0915,R0917,C0413,E0401 --init-hook="import sys; sys.path.append('.')" $(git ls-files '*.py')
