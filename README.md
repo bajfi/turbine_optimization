@@ -18,15 +18,6 @@ turbine_optimization/
 └── main.py               # Entry point
 ```
 
-## Features
-
-- **Modular Design**: Each component is designed to be replaceable and extensible
-- **Multiple Surrogate Models**: Support for different surrogate models (currently RandomForest)
-- **Multi-Objective Optimization**: Using NSGA-II and other algorithms
-- **Visualization Tools**: Comprehensive plotting of Pareto fronts and parameter relationships
-- **Configuration System**: Easy configuration via YAML or JSON files
-- **Flexible Data Handling**: Configurable column mappings to work with any data format
-
 ## Requirements
 
 - Python 3.10+
@@ -175,9 +166,9 @@ data = loader.load_data("turbine_data.csv")
 # Define column mappings using generic names
 parameter_mappings = {
     "x1": "blads",     # First parameter (integer)
-    "x2": "baojiao",   # Second parameter
-    "x3": "angle_in",  # Third parameter
-    "x4": "angle_out"  # Fourth parameter
+    "x2": "angle_wrap",   # Second parameter
+    "x3": "angle_in",     # Third parameter
+    "x4": "angle_out"     # Fourth parameter
 }
 target_mappings = {
     "y1": {
@@ -217,20 +208,6 @@ optimizer = MultiObjectiveOptimizer(problem)
 results = optimizer.run_optimization()
 ```
 
-## Documentation
-
-For more detailed documentation, see the docstrings in the code or the [project wiki](link-to-wiki).
-
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
