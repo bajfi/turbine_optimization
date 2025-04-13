@@ -5,7 +5,7 @@ from typing import Any, Dict, override
 import numpy as np
 import xgboost as xgb
 
-from .base_model import BaseModel
+from src.models.base_model import BaseModel
 
 
 class XGBoostModel(BaseModel):

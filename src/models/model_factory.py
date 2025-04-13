@@ -1,11 +1,11 @@
 from typing import Dict, Type
 
-from .base_model import BaseModel
-from .gradient_boosting import GradientBoostingModel
-from .neural_network import NeuralNetworkModel
-from .random_forest import RandomForestModel
-from .svr import SVRModel
-from .xgboost_model import XGBoostModel
+from src.models.base_model import BaseModel
+from src.models.gradient_boosting import GradientBoostingModel
+from src.models.neural_network import NeuralNetworkModel
+from src.models.random_forest import RandomForestModel
+from src.models.svr import SVRModel
+from src.models.xgboost_model import XGBoostModel
 
 
 class ModelFactory:

@@ -5,7 +5,7 @@ from pymoo.operators.crossover.sbx import SBX
 from pymoo.operators.mutation.pm import PM
 from pymoo.operators.sampling.rnd import IntegerRandomSampling
 
-from .base_algorithm import OptimizationAlgorithm
+from src.optimization.algorithms.base_algorithm import OptimizationAlgorithm
 
 
 class SMSEMOAAlgorithm(OptimizationAlgorithm):

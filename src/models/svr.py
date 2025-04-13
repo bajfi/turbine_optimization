@@ -5,7 +5,7 @@ from typing import Any, Dict, Union, override
 import numpy as np
 from sklearn.svm import SVR
 
-from .base_model import BaseModel
+from src.models.base_model import BaseModel
 
 
 class SVRModel(BaseModel):

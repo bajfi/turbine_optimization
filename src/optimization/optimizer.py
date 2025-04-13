@@ -3,9 +3,9 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 from pymoo.optimize import minimize
 
-from .algorithms import create_algorithm, get_available_algorithms
-from .problem_definition import TurbineOptimizationProblem
-from .result_handler import OptimizationResultHandler
+from src.optimization.algorithms import create_algorithm, get_available_algorithms
+from src.optimization.problem_definition import TurbineOptimizationProblem
+from src.optimization.result_handler import OptimizationResultHandler
 
 
 class MultiObjectiveOptimizer:

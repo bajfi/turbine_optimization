@@ -6,7 +6,7 @@ from pymoo.operators.mutation.pm import PM
 from pymoo.operators.sampling.rnd import IntegerRandomSampling
 from pymoo.util.ref_dirs import get_reference_directions
 
-from .base_algorithm import OptimizationAlgorithm
+from src.optimization.algorithms.base_algorithm import OptimizationAlgorithm
 
 
 class MOEADAlgorithm(OptimizationAlgorithm):

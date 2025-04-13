@@ -3,7 +3,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
-from .data_loader import DataLoader
+from src.data.data_loader import DataLoader
 
 
 class DataProcessor:

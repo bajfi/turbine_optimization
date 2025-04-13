@@ -1,9 +1,9 @@
 from typing import Any, Dict, Optional, Type
 
-from .base_algorithm import OptimizationAlgorithm
-from .moead_algorithm import MOEADAlgorithm
-from .nsga2_algorithm import NSGA2Algorithm
-from .sms_emoa_algorithm import SMSEMOAAlgorithm
+from src.optimization.algorithms.base_algorithm import OptimizationAlgorithm
+from src.optimization.algorithms.moead_algorithm import MOEADAlgorithm
+from src.optimization.algorithms.nsga2_algorithm import NSGA2Algorithm
+from src.optimization.algorithms.sms_emoa_algorithm import SMSEMOAAlgorithm
 
 
 class AlgorithmFactory:

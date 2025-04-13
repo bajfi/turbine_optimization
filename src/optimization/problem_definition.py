@@ -3,7 +3,7 @@ from typing import List
 import numpy as np
 from pymoo.core.problem import ElementwiseProblem
 
-from ..models.base_model import BaseModel
+from src.models.base_model import BaseModel
 
 
 class TurbineOptimizationProblem(ElementwiseProblem):
