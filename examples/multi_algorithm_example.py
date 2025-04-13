@@ -5,7 +5,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 # Add the project root directory to Python path to allow imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), r"../")))
 
 from src.models.base_model import BaseModel
 from src.optimization.optimizer import MultiObjectiveOptimizer
