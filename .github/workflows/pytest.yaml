@@ -18,7 +18,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pytest
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f turbine_optimization/requirements.txt ]; then pip install -r turbine_optimization/requirements.txt; fi
+      - name: Install package in development mode
+        run: |
+          cd turbine_optimization
+          pip install -e .
       - name: Run pytest
         run: |
+          cd turbine_optimization
           pytest -v
