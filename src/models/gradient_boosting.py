@@ -99,8 +99,7 @@ class GradientBoostingModel(BaseModel):
         """
         if hasattr(self.model, "feature_importances_"):
             return self.model.feature_importances_
-        else:
-            raise ValueError("Model has not been trained yet")
+        raise ValueError("Model has not been trained yet")
 
     @override
     def save_model(self, file_path: str) -> None:

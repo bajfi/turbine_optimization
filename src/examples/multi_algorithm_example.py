@@ -1,9 +1,11 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-from ..models.base_model import BaseModel
-from ..optimization.optimizer import MultiObjectiveOptimizer
-from ..optimization.problem_definition import TurbineOptimizationProblem
+from turbine_optimization.src.models.base_model import BaseModel
+from turbine_optimization.src.optimization.optimizer import MultiObjectiveOptimizer
+from turbine_optimization.src.optimization.problem_definition import (
+    TurbineOptimizationProblem,
+)
 
 
 class DummyModel(BaseModel):
@@ -15,35 +17,100 @@ class DummyModel(BaseModel):
         self.function = function
 
     def predict(self, x):
+        """
+        Predict function result from input.
+
+        Args:
+            x: Input data
+
+        Returns:
+            Predicted values
+        """
         return self.function(x)
 
     def fit(self, X, y):
+        """
+        Dummy fit method implementation.
+
+        Args:
+            X: Training data features
+            y: Training data targets
+        """
         # Dummy implementation - does nothing
         pass
 
     def get_params(self):
+        """
+        Get model parameters.
+
+        Returns:
+            Empty parameter dictionary
+        """
         # Return empty params dictionary
         return {}
 
     def set_params(self, **params):
+        """
+        Set model parameters.
+
+        Args:
+            params: Parameters to set
+        """
         # Dummy implementation - does nothing
         pass
 
     def save_model(self, file_path):
+        """
+        Save model to file.
+
+        Args:
+            file_path: Path to save model
+        """
         # Dummy implementation - does nothing
         pass
 
     def load_model(self, file_path):
+        """
+        Load model from file.
+
+        Args:
+            file_path: Path to load model from
+        """
         # Dummy implementation - does nothing
         pass
 
 
 def main():
+    """
+    Main function that demonstrates multi-algorithm optimization.
+
+    Creates dummy objective functions, optimizes them with different algorithms,
+    and compares results.
+    """
+
     # Create dummy objective functions
     def objective1(x):
+        """
+        First objective function: sum of squared values.
+
+        Args:
+            x: Input array
+
+        Returns:
+            Sum of squared values
+        """
         return np.sum(x**2, axis=1)
 
     def objective2(x):
+        """
+        Second objective function: sum of squared differences from 2.
+
+        Args:
+            x: Input array
+
+        Returns:
+            Sum of squared differences from 2
+        """
         return np.sum((x - 2) ** 2, axis=1)
 
     # Create dummy models

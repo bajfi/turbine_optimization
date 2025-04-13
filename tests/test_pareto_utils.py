@@ -11,6 +11,10 @@ from src.utils.pareto_utils import (
 
 class TestIdentifyParetoFront:
     def test_simple_2d_case(self):
+        """
+        Test identifying Pareto front for a simple 2D case with clearly defined
+        Pareto-optimal solutions.
+        """
         # Minimize both objectives
         F = np.array(
             [
@@ -30,6 +34,9 @@ class TestIdentifyParetoFront:
         np.testing.assert_array_equal(result, expected)
 
     def test_3d_objectives(self):
+        """
+        Test identifying Pareto front for a problem with 3D objectives.
+        """
         # Minimize all three objectives
         F = np.array(
             [
@@ -47,6 +54,9 @@ class TestIdentifyParetoFront:
         np.testing.assert_array_equal(result, expected)
 
     def test_identical_solutions(self):
+        """
+        Test identifying Pareto front when there are identical solutions.
+        """
         # Solutions with identical objective values
         F = np.array(
             [
@@ -63,6 +73,9 @@ class TestIdentifyParetoFront:
         np.testing.assert_array_equal(result, expected)
 
     def test_empty_array(self):
+        """
+        Test identifying Pareto front for an empty array.
+        """
         F = np.array([]).reshape(0, 2)
         result = identify_pareto_front(F)
         assert len(result) == 0
@@ -70,6 +83,10 @@ class TestIdentifyParetoFront:
 
 class TestCleanParetoFront:
     def test_remove_duplicates(self):
+        """
+        Test removing duplicate solutions from Pareto front within
+        a specified precision.
+        """
         F = np.array(
             [
                 [1.00001, 2.00001],
@@ -89,6 +106,9 @@ class TestCleanParetoFront:
         assert np.all(np.diff(cleaned_F[:, 0]) >= 0)
 
     def test_no_duplicates(self):
+        """
+        Test cleaning Pareto front when there are no duplicate solutions.
+        """
         F = np.array(
             [
                 [1, 5],
@@ -111,6 +131,9 @@ class TestCleanParetoFront:
 
 class TestInterpolateParetoFront:
     def test_interpolation(self):
+        """
+        Test interpolating Pareto front with evenly distributed points.
+        """
         x = np.array([1, 3, 5, 7])
         y = np.array([7, 5, 3, 1])
 
@@ -130,6 +153,9 @@ class TestInterpolateParetoFront:
         assert np.allclose(np.diff(x_interp), (7 - 1) / 6)
 
     def test_with_duplicate_x_values(self):
+        """
+        Test interpolating Pareto front when there are duplicate x values.
+        """
         x = np.array([1, 2, 2, 3])
         y = np.array([4, 3, 2, 1])
 
@@ -148,6 +174,9 @@ class TestInterpolateParetoFront:
 
 class TestSmoothParetoFront:
     def test_smoothing(self):
+        """
+        Test smoothing a Pareto front using Gaussian smoothing.
+        """
         x = np.array([1, 2, 3, 4, 5])
         y = np.array([5, 4, 3, 2, 1])
 
@@ -165,6 +194,9 @@ class TestSmoothParetoFront:
         assert np.array_equal(y_smooth, y_smooth[x_sorted_indices])
 
     def test_small_array(self):
+        """
+        Test smoothing a small Pareto front with 3 or fewer points.
+        """
         # Test with array of length <= 3
         x = np.array([1, 2, 3])
         y = np.array([3, 2, 1])
@@ -177,6 +209,9 @@ class TestSmoothParetoFront:
 
 class TestFindClosestSolution:
     def test_exact_match(self):
+        """
+        Test finding the closest solution when an exact match exists.
+        """
         X = np.array(
             [
                 [1, 1],
@@ -202,6 +237,9 @@ class TestFindClosestSolution:
         np.testing.assert_array_equal(closest_x, X[2])
 
     def test_approximate_match(self):
+        """
+        Test finding the closest solution when only an approximate match exists.
+        """
         X = np.array(
             [
                 [1, 1],

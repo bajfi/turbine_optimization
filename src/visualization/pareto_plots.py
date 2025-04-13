@@ -55,7 +55,7 @@ class ParetoVisualizer:
         )
 
         # Get cleaned Pareto front
-        idx, cleaned_F = clean_pareto_front(F)
+        _, cleaned_F = clean_pareto_front(F)
         x_pareto = cleaned_F[:, 0]
         y_pareto = cleaned_F[:, 1]
 
@@ -94,7 +94,12 @@ class ParetoVisualizer:
             xy=(0.02, 0.02),
             xycoords="axes fraction",
             fontsize=12,
-            bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="gray", alpha=0.8),
+            bbox={
+                "boxstyle": "round,pad=0.3",
+                "fc": "white",
+                "ec": "gray",
+                "alpha": 0.8,
+            },
         )
 
         plt.tight_layout()
@@ -155,7 +160,7 @@ class ParetoVisualizer:
         )
 
         # Get cleaned Pareto front
-        idx, cleaned_F = clean_pareto_front(F)
+        _, cleaned_F = clean_pareto_front(F)
         x_pareto = cleaned_F[:, 0]
         y_pareto = cleaned_F[:, 1]
 

@@ -61,10 +61,10 @@ class ConfigManager:
         ext = os.path.splitext(config_path)[1].lower()
 
         if ext in [".yaml", ".yml"]:
-            with open(config_path, "r") as f:
+            with open(config_path, "r", encoding="utf-8") as f:
                 self.config = yaml.safe_load(f)
         elif ext in [".json"]:
-            with open(config_path, "r") as f:
+            with open(config_path, "r", encoding="utf-8") as f:
                 self.config = json.load(f)
         else:
             raise ValueError(f"Unsupported configuration file format: {ext}")
@@ -91,10 +91,10 @@ class ConfigManager:
         ext = os.path.splitext(save_path)[1].lower()
 
         if ext in [".yaml", ".yml"]:
-            with open(save_path, "w") as f:
+            with open(save_path, "w", encoding="utf-8") as f:
                 yaml.dump(self.config, f, default_flow_style=False)
         elif ext in [".json"]:
-            with open(save_path, "w") as f:
+            with open(save_path, "w", encoding="utf-8") as f:
                 json.dump(self.config, f, indent=2)
         else:
             raise ValueError(f"Unsupported configuration file format: {ext}")

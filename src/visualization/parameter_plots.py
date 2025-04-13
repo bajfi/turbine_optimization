@@ -61,6 +61,9 @@ class ParameterVisualizer:
         # Get pairwise parameter combinations
         param_indices = list(itertools.combinations(range(n_params), 2))
 
+        # Initialize i to avoid undefined loop variable issue
+        i = 0
+
         # Create plots for each parameter combination
         for i, (idx1, idx2) in enumerate(param_indices):
             if i >= len(axs):  # In case we calculated wrong

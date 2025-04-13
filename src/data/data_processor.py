@@ -3,6 +3,8 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
+from .data_loader import DataLoader
+
 
 class DataProcessor:
     """
@@ -65,8 +67,6 @@ class DataProcessor:
         Returns:
             Tuple of (X_train, targets_dict)
         """
-        from .data_loader import DataLoader
-
         # Create a DataLoader to extract features and targets
         loader = DataLoader()
 
