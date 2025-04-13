@@ -20,17 +20,17 @@ class DummyModel(BaseModel):
     def __init__(self, function):
         self.function = function
 
-    def predict(self, x):
+    def predict(self, X):
         """
         Predict function result from input.
 
         Args:
-            x: Input data
+            X: Input data
 
         Returns:
             Predicted values
         """
-        return self.function(x)
+        return self.function(X)
 
     def fit(self, X, y):
         """

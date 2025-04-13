@@ -11,7 +11,8 @@ from .base_algorithm import OptimizationAlgorithm
 
 class MOEADAlgorithm(OptimizationAlgorithm):
     """
-    Implementation of the MOEA/D (Multi-Objective Evolutionary Algorithm based on Decomposition) algorithm.
+    Implementation of the MOEA/D (Multi-Objective Evolutionary Algorithm
+    based on Decomposition) algorithm.
     """
 
     @override

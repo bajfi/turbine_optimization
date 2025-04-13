@@ -24,7 +24,8 @@ class ParameterVisualizer:
             **config: Visualization configuration including:
                 objective_idx: Index of the objective to use for coloring (default: 0)
                 colormap: Colormap to use (default: "viridis")
-                integer_params: Indices of parameters that should be treated as integers (default: [])
+                integer_params: Indices of parameters that should be treated as integers
+                    (default: [])
                 title: Plot title (default: "Parameter Relationships")
                 save_path: Path to save the figure (default: None)
                 show_plot: Whether to show the plot (default: True)
@@ -145,7 +146,8 @@ class ParameterVisualizer:
             **config: Visualization configuration including:
                 objective_idx: Index of the objective to use for coloring (default: 0)
                 colormap: Colormap to use (default: "viridis")
-                integer_params: Indices of parameters that should be treated as integers (default: [])
+                integer_params: Indices of parameters that should be treated as integers
+                    (default: [])
                 title: Plot title (default: "Parameter Space")
                 save_path: Path to save the figure (default: None)
                 show_plot: Whether to show the plot (default: True)
