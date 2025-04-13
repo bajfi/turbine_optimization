@@ -1,6 +1,5 @@
 import itertools
-from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,17 +12,7 @@ class ParameterVisualizer:
 
     @staticmethod
     def plot_parameter_pairwise(
-        X: np.ndarray,
-        F: np.ndarray,
-        parameter_names: List[str],
-        objective_idx: int = 0,
-        colormap: str = "viridis",
-        integer_params: List[int] = None,
-        title: str = "Parameter Relationships",
-        save_path: Optional[str | Path] = None,
-        show_plot: bool = True,
-        figsize: Tuple[int, int] = (18, 12),
-        dpi: int = 300,
+        X: np.ndarray, F: np.ndarray, parameter_names: List[str], **config
     ) -> plt.Figure:
         """
         Create pairwise plots showing relationships between parameters.
@@ -32,20 +21,34 @@ class ParameterVisualizer:
             X: Decision variables, shape (n_solutions, n_parameters)
             F: Objective values, shape (n_solutions, n_objectives)
             parameter_names: Names of the parameters
-            objective_idx: Index of the objective to use for coloring
-            colormap: Colormap to use
-            integer_params: Indices of parameters that should be treated as integers
-            title: Plot title
-            save_path: Path to save the figure
-            show_plot: Whether to show the plot
-            figsize: Figure size
-            dpi: DPI for saved figure
+            **config: Visualization configuration including:
+                objective_idx: Index of the objective to use for coloring (default: 0)
+                colormap: Colormap to use (default: "viridis")
+                integer_params: Indices of parameters that should be treated as integers (default: [])
+                title: Plot title (default: "Parameter Relationships")
+                save_path: Path to save the figure (default: None)
+                show_plot: Whether to show the plot (default: True)
+                figsize: Figure size (default: (18, 12))
+                dpi: DPI for saved figure (default: 300)
 
         Returns:
             The matplotlib figure
         """
-        if integer_params is None:
-            integer_params = []
+        # Default configuration
+        default_config = {
+            "objective_idx": 0,
+            "colormap": "viridis",
+            "integer_params": [],
+            "title": "Parameter Relationships",
+            "save_path": None,
+            "show_plot": True,
+            "figsize": (18, 12),
+            "dpi": 300,
+        }
+
+        # Update with user provided config
+        viz_config = default_config.copy()
+        viz_config.update(config)
 
         # Create subplots
         n_params = X.shape[1]
@@ -55,7 +58,7 @@ class ParameterVisualizer:
         n_rows = int(np.ceil(np.sqrt(n_plots)))
         n_cols = int(np.ceil(n_plots / n_rows))
 
-        fig, axs = plt.subplots(n_rows, n_cols, figsize=figsize)
+        fig, axs = plt.subplots(n_rows, n_cols, figsize=viz_config["figsize"])
         axs = axs.flatten()
 
         # Get pairwise parameter combinations
@@ -73,8 +76,10 @@ class ParameterVisualizer:
             scatter = axs[i].scatter(
                 X[:, idx1],
                 X[:, idx2],
-                c=-F[:, objective_idx],  # Use negative for consistent color scale
-                cmap=colormap,
+                c=-F[
+                    :, viz_config["objective_idx"]
+                ],  # Use negative for consistent color scale
+                cmap=viz_config["colormap"],
                 s=50,
                 alpha=0.8,
             )
@@ -87,11 +92,11 @@ class ParameterVisualizer:
             axs[i].grid(True, linestyle="--", alpha=0.3)
 
             # Set integer ticks for integer parameters
-            if idx1 in integer_params:
+            if idx1 in viz_config["integer_params"]:
                 param_values = np.unique(np.round(X[:, idx1])).astype(int)
                 axs[i].set_xticks(param_values)
 
-            if idx2 in integer_params:
+            if idx2 in viz_config["integer_params"]:
                 param_values = np.unique(np.round(X[:, idx2])).astype(int)
                 axs[i].set_yticks(param_values)
 
@@ -107,14 +112,16 @@ class ParameterVisualizer:
         cbar.set_label("Objective Value", fontsize=14)
 
         # Set overall title
-        fig.suptitle(title, fontsize=16)
+        fig.suptitle(viz_config["title"], fontsize=16)
 
         # Save figure if requested
-        if save_path:
-            plt.savefig(save_path, dpi=dpi, bbox_inches="tight")
+        if viz_config["save_path"]:
+            plt.savefig(
+                viz_config["save_path"], dpi=viz_config["dpi"], bbox_inches="tight"
+            )
 
         # Show plot if requested
-        if show_plot:
+        if viz_config["show_plot"]:
             plt.show()
 
         return fig
@@ -125,14 +132,7 @@ class ParameterVisualizer:
         F: np.ndarray,
         param_indices: List[int],
         parameter_names: List[str],
-        objective_idx: int = 0,
-        colormap: str = "viridis",
-        integer_params: List[int] = None,
-        title: str = "Parameter Space",
-        save_path: Optional[str | Path] = None,
-        show_plot: bool = True,
-        figsize: Tuple[int, int] = (12, 10),
-        dpi: int = 300,
+        **config,
     ) -> plt.Figure:
         """
         Create a 3D visualization of the parameter space.
@@ -142,14 +142,15 @@ class ParameterVisualizer:
             F: Objective values, shape (n_solutions, n_objectives)
             param_indices: Indices of three parameters to visualize
             parameter_names: Names of the parameters
-            objective_idx: Index of the objective to use for coloring
-            colormap: Colormap to use
-            integer_params: Indices of parameters that should be treated as integers
-            title: Plot title
-            save_path: Path to save the figure
-            show_plot: Whether to show the plot
-            figsize: Figure size
-            dpi: DPI for saved figure
+            **config: Visualization configuration including:
+                objective_idx: Index of the objective to use for coloring (default: 0)
+                colormap: Colormap to use (default: "viridis")
+                integer_params: Indices of parameters that should be treated as integers (default: [])
+                title: Plot title (default: "Parameter Space")
+                save_path: Path to save the figure (default: None)
+                show_plot: Whether to show the plot (default: True)
+                figsize: Figure size (default: (12, 10))
+                dpi: DPI for saved figure (default: 300)
 
         Returns:
             The matplotlib figure
@@ -157,11 +158,24 @@ class ParameterVisualizer:
         if len(param_indices) != 3:
             raise ValueError("param_indices must contain exactly 3 indices")
 
-        if integer_params is None:
-            integer_params = []
+        # Default configuration
+        default_config = {
+            "objective_idx": 0,
+            "colormap": "viridis",
+            "integer_params": [],
+            "title": "Parameter Space",
+            "save_path": None,
+            "show_plot": True,
+            "figsize": (12, 10),
+            "dpi": 300,
+        }
+
+        # Update with user provided config
+        viz_config = default_config.copy()
+        viz_config.update(config)
 
         # Create figure
-        fig = plt.figure(figsize=figsize)
+        fig = plt.figure(figsize=viz_config["figsize"])
         ax = fig.add_subplot(111, projection="3d")
 
         # Get parameter values
@@ -170,11 +184,11 @@ class ParameterVisualizer:
         z_vals = X[:, param_indices[2]]
 
         # Round integer parameters
-        if param_indices[0] in integer_params:
+        if param_indices[0] in viz_config["integer_params"]:
             x_vals = np.round(x_vals).astype(int)
-        if param_indices[1] in integer_params:
+        if param_indices[1] in viz_config["integer_params"]:
             y_vals = np.round(y_vals).astype(int)
-        if param_indices[2] in integer_params:
+        if param_indices[2] in viz_config["integer_params"]:
             z_vals = np.round(z_vals).astype(int)
 
         # Create 3D scatter plot
@@ -182,8 +196,10 @@ class ParameterVisualizer:
             x_vals,
             y_vals,
             z_vals,
-            c=-F[:, objective_idx],  # Use negative for consistent color scale
-            cmap=colormap,
+            c=-F[
+                :, viz_config["objective_idx"]
+            ],  # Use negative for consistent color scale
+            cmap=viz_config["colormap"],
             s=50,
             alpha=0.8,
         )
@@ -192,14 +208,14 @@ class ParameterVisualizer:
         ax.set_xlabel(parameter_names[param_indices[0]], fontsize=12)
         ax.set_ylabel(parameter_names[param_indices[1]], fontsize=12)
         ax.set_zlabel(parameter_names[param_indices[2]], fontsize=12)
-        ax.set_title(title, fontsize=14)
+        ax.set_title(viz_config["title"], fontsize=14)
 
         # Set integer ticks for integer parameters
-        if param_indices[0] in integer_params:
+        if param_indices[0] in viz_config["integer_params"]:
             ax.set_xticks(np.unique(x_vals))
-        if param_indices[1] in integer_params:
+        if param_indices[1] in viz_config["integer_params"]:
             ax.set_yticks(np.unique(y_vals))
-        if param_indices[2] in integer_params:
+        if param_indices[2] in viz_config["integer_params"]:
             ax.set_zticks(np.unique(z_vals))
 
         # Add colorbar
@@ -207,11 +223,13 @@ class ParameterVisualizer:
         cbar.set_label("Objective Value", fontsize=12)
 
         # Save figure if requested
-        if save_path:
-            plt.savefig(save_path, dpi=dpi, bbox_inches="tight")
+        if viz_config["save_path"]:
+            plt.savefig(
+                viz_config["save_path"], dpi=viz_config["dpi"], bbox_inches="tight"
+            )
 
         # Show plot if requested
-        if show_plot:
+        if viz_config["show_plot"]:
             plt.show()
 
         return fig

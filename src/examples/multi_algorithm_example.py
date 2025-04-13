@@ -1,11 +1,15 @@
+import os
+import sys
+
 import numpy as np
 from matplotlib import pyplot as plt
 
-from turbine_optimization.src.models.base_model import BaseModel
-from turbine_optimization.src.optimization.optimizer import MultiObjectiveOptimizer
-from turbine_optimization.src.optimization.problem_definition import (
-    TurbineOptimizationProblem,
-)
+# Add the project root directory to Python path to allow imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
+
+from src.models.base_model import BaseModel
+from src.optimization.optimizer import MultiObjectiveOptimizer
+from src.optimization.problem_definition import TurbineOptimizationProblem
 
 
 class DummyModel(BaseModel):
@@ -80,6 +84,66 @@ class DummyModel(BaseModel):
         pass
 
 
+def run_single_algorithm(
+    optimizer, algorithm_name, algorithm_params, parameter_names, objective_names
+):
+    """
+    Run optimization with a specific algorithm and get Pareto solutions.
+
+    Args:
+        optimizer: The MultiObjectiveOptimizer instance
+        algorithm_name: Name of the algorithm to run
+        algorithm_params: Parameters for the algorithm
+        parameter_names: Names of the parameters
+        objective_names: Names of the objectives
+
+    Returns:
+        Pandas DataFrame with Pareto solutions
+    """
+    print(f"\nRunning optimization with {algorithm_name.upper()} algorithm...")
+    optimizer.run_optimization(
+        algorithm_name=algorithm_name,
+        algorithm_params=algorithm_params,
+        n_gen=50,
+        verbose=True,
+    )
+
+    # Get and print Pareto solutions
+    pareto_solutions = optimizer.get_pareto_solutions(
+        parameter_names=parameter_names, objective_names=objective_names
+    )
+    print(f"\nPareto solutions with {algorithm_name.upper()}:")
+    print(pareto_solutions.head())
+
+    return pareto_solutions
+
+
+def plot_comparison(pareto_solutions_dict):
+    """
+    Create a comparative plot of Pareto fronts from different algorithms.
+
+    Args:
+        pareto_solutions_dict: Dictionary mapping algorithm names to their Pareto solutions
+    """
+    plt.figure(figsize=(10, 6))
+
+    for algo_name, solutions in pareto_solutions_dict.items():
+        plt.scatter(
+            solutions["f1"],
+            solutions["f2"],
+            label=algo_name.upper(),
+            alpha=0.7,
+        )
+
+    plt.xlabel("Objective 1")
+    plt.ylabel("Objective 2")
+    plt.title("Comparison of Pareto Fronts")
+    plt.legend()
+    plt.grid(True)
+    plt.savefig("pareto_front_comparison.png")
+    plt.show()
+
+
 def main():
     """
     Main function that demonstrates multi-algorithm optimization.
@@ -135,85 +199,34 @@ def main():
     for name, description in algorithms.items():
         print(f"- {name}: {description}")
 
-    # Run optimization with NSGA-II
-    print("\nRunning optimization with NSGA-II algorithm...")
-    optimizer.run_optimization(
-        algorithm_name="nsga2",
-        algorithm_params={"pop_size": 100},
-        n_gen=50,
-        verbose=True,
-    )
+    # Parameter and objective names for all algorithms
+    parameter_names = ["x1", "x2", "x3"]
+    objective_names = ["f1", "f2"]
 
-    # Get and print Pareto solutions
-    pareto_solutions_nsga2 = optimizer.get_pareto_solutions(
-        parameter_names=["x1", "x2", "x3"], objective_names=["f1", "f2"]
+    # Dictionary to store Pareto solutions from each algorithm
+    pareto_solutions = {}
+
+    # Run optimization with NSGA-II
+    pareto_solutions["nsga2"] = run_single_algorithm(
+        optimizer, "nsga2", {"pop_size": 100}, parameter_names, objective_names
     )
-    print("\nPareto solutions with NSGA-II:")
-    print(pareto_solutions_nsga2.head())
 
     # Run optimization with MOEA/D
-    print("\nRunning optimization with MOEA/D algorithm...")
-    optimizer.run_optimization(
-        algorithm_name="moead",
-        algorithm_params={"n_neighbors": 10},
-        n_gen=50,
-        verbose=True,
+    pareto_solutions["moead"] = run_single_algorithm(
+        optimizer, "moead", {"n_neighbors": 10}, parameter_names, objective_names
     )
-
-    # Get and print Pareto solutions
-    pareto_solutions_moead = optimizer.get_pareto_solutions(
-        parameter_names=["x1", "x2", "x3"], objective_names=["f1", "f2"]
-    )
-    print("\nPareto solutions with MOEA/D:")
-    print(pareto_solutions_moead.head())
 
     # Run optimization with SMS-EMOA
-    print("\nRunning optimization with SMS-EMOA algorithm...")
-    optimizer.run_optimization(
-        algorithm_name="sms-emoa",
-        algorithm_params={"pop_size": 80},
-        n_gen=50,
-        verbose=True,
+    pareto_solutions["sms-emoa"] = run_single_algorithm(
+        optimizer, "sms-emoa", {"pop_size": 80}, parameter_names, objective_names
     )
-
-    # Get and print Pareto solutions
-    pareto_solutions_smsemoa = optimizer.get_pareto_solutions(
-        parameter_names=["x1", "x2", "x3"], objective_names=["f1", "f2"]
-    )
-    print("\nPareto solutions with SMS-EMOA:")
-    print(pareto_solutions_smsemoa.head())
 
     # Compare results with visualization
-    plt.figure(figsize=(10, 6))
-    plt.scatter(
-        pareto_solutions_nsga2["f1"],
-        pareto_solutions_nsga2["f2"],
-        label="NSGA-II",
-        alpha=0.7,
-    )
-    plt.scatter(
-        pareto_solutions_moead["f1"],
-        pareto_solutions_moead["f2"],
-        label="MOEA/D",
-        alpha=0.7,
-    )
-    plt.scatter(
-        pareto_solutions_smsemoa["f1"],
-        pareto_solutions_smsemoa["f2"],
-        label="SMS-EMOA",
-        alpha=0.7,
-    )
-    plt.xlabel("Objective 1")
-    plt.ylabel("Objective 2")
-    plt.title("Comparison of Pareto Fronts")
-    plt.legend()
-    plt.grid(True)
-    plt.savefig("pareto_front_comparison.png")
-    plt.show()
+    plot_comparison(pareto_solutions)
 
     # Get best solutions
-    best_nsga2 = optimizer.get_best_solution(objective_index=0)
-    print(f"\nBest solution for f1 with most recent algorithm: {best_nsga2}")
+    best_solution = optimizer.get_best_solution(objective_index=0)
+    print(f"\nBest solution for f1 with most recent algorithm: {best_solution}")
 
     # Show the last configuration used
     print("\nLast algorithm configuration:")

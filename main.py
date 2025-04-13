@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 import argparse
 import os
+import sys
+
+# Add the project root directory to Python path to allow imports
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from config.config import DEFAULT_CONFIG, ConfigManager, init_config
 
@@ -31,11 +35,15 @@ def parse_args():
     return parser.parse_args()
 
 
-def main():
-    """Main entry point for the application."""
-    # Parse command-line arguments
-    args = parse_args()
+def setup_config(args):
+    """Set up the configuration from arguments.
 
+    Args:
+        args: Parsed command-line arguments
+
+    Returns:
+        ConfigManager instance
+    """
     # Initialize configuration
     if args.init_config:
         print(f"Initializing configuration file: {args.config}")
@@ -48,10 +56,18 @@ def main():
             print("Using default configuration...")
             config_manager.config = DEFAULT_CONFIG.copy()
 
-    # Create output directory if it doesn't exist
-    output_dir = config_manager.get("visualization.output_dir", "results")
-    os.makedirs(output_dir, exist_ok=True)
+    return config_manager
 
+
+def load_and_process_data(config_manager):
+    """Load and process data according to configuration.
+
+    Args:
+        config_manager: ConfigManager instance
+
+    Returns:
+        Tuple of (X_train, targets_dict, parameter_names, integer_indices, x_min, x_max)
+    """
     # Load data
     data_dir = config_manager.get("data.data_dir", "data")
     data_file = config_manager.get("data.data_file")
@@ -92,11 +108,33 @@ def main():
     # Update integer_vars in the config for visualization
     config_manager.set("optimization.integer_vars", integer_indices)
 
-    # Create models for each target
+    return (
+        X_train,
+        targets_dict,
+        parameter_names,
+        integer_indices,
+        x_min,
+        x_max,
+        target_mappings,
+    )
+
+
+def create_and_train_models(config_manager, X_train, targets_dict, target_names):
+    """Create and train surrogate models for each target.
+
+    Args:
+        config_manager: ConfigManager instance
+        X_train: Training features
+        targets_dict: Dictionary of target values
+        target_names: List of target names
+
+    Returns:
+        List of trained models
+    """
     print("Creating surrogate models...")
     models = []
-    objective_names = list(target_mappings.keys())
-    for target_name in objective_names:
+
+    for target_name in target_names:
         model_config = config_manager.get(f"models.{target_name}_model", {})
         model = ModelFactory.create_model(
             model_config.get("type", "random_forest"), **model_config.get("params", {})
@@ -105,9 +143,25 @@ def main():
 
     # Train models
     print("Training surrogate models...")
-    for i, target_name in enumerate(objective_names):
+    for i, target_name in enumerate(target_names):
         models[i].fit(X_train, targets_dict[target_name])
 
+    return models
+
+
+def run_optimization(config_manager, models, x_min, x_max, integer_indices):
+    """Run the optimization process.
+
+    Args:
+        config_manager: ConfigManager instance
+        models: List of trained models
+        x_min: Lower bounds for variables
+        x_max: Upper bounds for variables
+        integer_indices: Indices of integer variables
+
+    Returns:
+        Dictionary containing optimization results
+    """
     # Setup optimization problem with integer variables from config
     print("Setting up optimization problem...")
     problem = TurbineOptimizationProblem(
@@ -120,111 +174,182 @@ def main():
 
     # Setup algorithm based on configuration
     algorithm_name = config_manager.get("optimization.algorithm", "nsga2")
-
-    # Run optimization
     opt_params = config_manager.get("optimization.algorithm_params", {})
     run_params = config_manager.get("optimization.run_params", {})
-    results = optimizer.run_optimization(
-        algorithm_name=algorithm_name,
-        algorithm_params=opt_params,
-        **run_params,
+
+    return (
+        optimizer.run_optimization(
+            algorithm_name=algorithm_name,
+            algorithm_params=opt_params,
+            **run_params,
+        ),
+        optimizer,
+        problem,
     )
 
-    # Get Pareto solutions with the parameter names from config
+
+def create_visualizations(
+    results,
+    parameter_names,
+    objective_names,
+    optimizer,
+    vis_config,
+    output_dir,
+    target_mappings,
+):
+    """Create visualizations of the optimization results.
+
+    Args:
+        results: Optimization results dictionary
+        parameter_names: List of parameter names
+        objective_names: List of objective names
+        optimizer: MultiObjectiveOptimizer instance
+        vis_config: Visualization configuration
+        output_dir: Output directory for saving plots
+        target_mappings: Dictionary mapping targets to their settings
+    """
     print("Processing results...")
     pareto_df = optimizer.get_pareto_solutions(
         parameter_names=parameter_names, objective_names=objective_names
     )
 
-    # Visualize results
-    vis_config = config_manager.get("visualization", {})
+    # Get visualization configuration
     dpi = vis_config.get("dpi", 300)
     show_plots = vis_config.get("show_plots", True)
     save_plots = vis_config.get("save_plots", True)
 
-    if save_plots or show_plots:
-        print("Creating visualizations...")
+    if not (save_plots or show_plots):
+        return pareto_df
 
-        # Get proper labels for objectives, accounting for objective type
-        x_label = objective_names[0]
-        y_label = objective_names[1] if len(objective_names) > 1 else "f₂"
+    print("Creating visualizations...")
 
-        # Get objective types
-        objective_types = {}
-        for obj_name, obj_info in target_mappings.items():
-            if isinstance(obj_info, dict):
-                objective_types[obj_name] = obj_info.get("type", "minimize").lower()
-            else:
-                objective_types[obj_name] = "minimize"
+    # Get proper labels for objectives, accounting for objective type
+    x_label = objective_names[0]
+    y_label = objective_names[1] if len(objective_names) > 1 else "f₂"
 
-        # Adjust labels based on objective type
-        if x_label in objective_types and objective_types[x_label] == "maximize":
-            x_label = f"Negative {x_label}"
-        if y_label in objective_types and objective_types[y_label] == "maximize":
-            y_label = f"Negative {y_label}"
+    # Get objective types
+    objective_types = {}
+    for obj_name, obj_info in target_mappings.items():
+        if isinstance(obj_info, dict):
+            objective_types[obj_name] = obj_info.get("type", "minimize").lower()
+        else:
+            objective_types[obj_name] = "minimize"
 
-        # Create Pareto front plot
-        ParetoVisualizer.plot_pareto_front(
-            results["F"],
-            title="Pareto Front for Turbine Optimization",
-            x_label=x_label,
-            y_label=y_label,
-            save_path=os.path.join(output_dir, "pareto_front.png")
-            if save_plots
-            else None,
-            show_plot=show_plots,
-            dpi=dpi,
-        )
+    # Adjust labels based on objective type
+    if x_label in objective_types and objective_types[x_label] == "maximize":
+        x_label = f"Negative {x_label}"
+    if y_label in objective_types and objective_types[y_label] == "maximize":
+        y_label = f"Negative {y_label}"
 
-        # Create interpolated Pareto front plot
-        ParetoVisualizer.plot_interpolated_pareto_front(
-            results["F"],
-            num_points=200,
-            title="Interpolated Pareto Front",
-            x_label=x_label,
-            y_label=y_label,
-            save_path=os.path.join(output_dir, "interpolated_pareto_front.png")
-            if save_plots
-            else None,
-            show_plot=show_plots,
-            dpi=dpi,
-        )
+    # Common visualization config
+    viz_config = {
+        "x_label": x_label,
+        "y_label": y_label,
+        "show_plot": show_plots,
+        "dpi": dpi,
+    }
 
-        # Create parameter relationship plots
-        ParameterVisualizer.plot_parameter_pairwise(
+    # Create Pareto front plot
+    ParetoVisualizer.plot_pareto_front(
+        results["F"],
+        title="Pareto Front for Turbine Optimization",
+        save_path=os.path.join(output_dir, "pareto_front.png") if save_plots else None,
+        **viz_config,
+    )
+
+    # Create interpolated Pareto front plot
+    ParetoVisualizer.plot_interpolated_pareto_front(
+        results["F"],
+        num_points=200,
+        title="Interpolated Pareto Front",
+        save_path=os.path.join(output_dir, "interpolated_pareto_front.png")
+        if save_plots
+        else None,
+        **viz_config,
+    )
+
+    # Create parameter relationship plots
+    ParameterVisualizer.plot_parameter_pairwise(
+        results["X"],
+        results["F"],
+        parameter_names=parameter_names,
+        objective_idx=1
+        if len(objective_names) > 1
+        else 0,  # Use second objective (usually efficiency) for coloring
+        integer_params=optimizer.problem.integer_vars,
+        title="Parameter Relationships for Pareto-Optimal Solutions",
+        save_path=os.path.join(output_dir, "parameter_relationships.png")
+        if save_plots
+        else None,
+        **viz_config,
+    )
+
+    # Create 3D parameter plot if we have at least 3 parameters
+    if len(parameter_names) >= 3:
+        ParameterVisualizer.plot_3d_parameter_space(
             results["X"],
             results["F"],
+            param_indices=[0, 1, 2],  # First three parameters
             parameter_names=parameter_names,
             objective_idx=1
             if len(objective_names) > 1
-            else 0,  # Use second objective (usually efficiency) for coloring
-            integer_params=integer_indices,
-            title="Parameter Relationships for Pareto-Optimal Solutions",
-            save_path=os.path.join(output_dir, "parameter_relationships.png")
+            else 0,  # Use second objective for coloring
+            integer_params=optimizer.problem.integer_vars,
+            title="Parameter Space of Pareto-Optimal Solutions",
+            save_path=os.path.join(output_dir, "parameter_space_3d.png")
             if save_plots
             else None,
-            show_plot=show_plots,
-            dpi=dpi,
+            **viz_config,
         )
 
-        # Create 3D parameter plot
-        if len(parameter_names) >= 3:
-            ParameterVisualizer.plot_3d_parameter_space(
-                results["X"],
-                results["F"],
-                param_indices=[0, 1, 2],  # First three parameters
-                parameter_names=parameter_names,
-                objective_idx=1
-                if len(objective_names) > 1
-                else 0,  # Use second objective for coloring
-                integer_params=integer_indices,
-                title="Parameter Space of Pareto-Optimal Solutions",
-                save_path=os.path.join(output_dir, "parameter_space_3d.png")
-                if save_plots
-                else None,
-                show_plot=show_plots,
-                dpi=dpi,
-            )
+    return pareto_df
+
+
+def main():
+    """Main entry point for the application."""
+    # Parse command-line arguments
+    args = parse_args()
+
+    # Setup configuration
+    config_manager = setup_config(args)
+
+    # Create output directory if it doesn't exist
+    output_dir = config_manager.get("visualization.output_dir", "results")
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Load and process data
+    (
+        X_train,
+        targets_dict,
+        parameter_names,
+        integer_indices,
+        x_min,
+        x_max,
+        target_mappings,
+    ) = load_and_process_data(config_manager)
+
+    # Create and train models
+    objective_names = list(target_mappings.keys())
+    models = create_and_train_models(
+        config_manager, X_train, targets_dict, objective_names
+    )
+
+    # Run optimization
+    results, optimizer, _ = run_optimization(
+        config_manager, models, x_min, x_max, integer_indices
+    )
+
+    # Visualize results
+    vis_config = config_manager.get("visualization", {})
+    pareto_df = create_visualizations(
+        results,
+        parameter_names,
+        objective_names,
+        optimizer,
+        vis_config,
+        output_dir,
+        target_mappings,
+    )
 
     # Save results
     results_file = os.path.join(output_dir, "pareto_solutions.csv")

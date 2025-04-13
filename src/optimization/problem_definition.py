@@ -1,4 +1,4 @@
-from typing import Callable, List
+from typing import List
 
 import numpy as np
 from pymoo.core.problem import ElementwiseProblem
@@ -13,12 +13,7 @@ class TurbineOptimizationProblem(ElementwiseProblem):
     """
 
     def __init__(
-        self,
-        models: List[BaseModel],
-        xl: np.ndarray,
-        xu: np.ndarray,
-        integer_vars: List[int] = None,
-        constraints: List[Callable] = None,
+        self, models: List[BaseModel], xl: np.ndarray, xu: np.ndarray, **kwargs
     ):
         """
         Initialize the optimization problem.
@@ -27,12 +22,13 @@ class TurbineOptimizationProblem(ElementwiseProblem):
             models: List of surrogate models for each objective
             xl: Lower bounds for variables
             xu: Upper bounds for variables
-            integer_vars: Indices of variables that should be treated as integers
-            constraints: List of constraint functions
+            **kwargs: Optional parameters:
+                integer_vars: Indices of variables that should be treated as integers
+                constraints: List of constraint functions
         """
         self.models = models
-        self.integer_vars = integer_vars or []
-        self.constraints = constraints or []
+        self.integer_vars = kwargs.get("integer_vars", [])
+        self.constraints = kwargs.get("constraints", [])
 
         # Call parent constructor with problem definition
         super().__init__(

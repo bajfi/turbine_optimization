@@ -40,9 +40,7 @@ class MultiObjectiveOptimizer:
         self,
         algorithm_name: str = "nsga2",
         algorithm_params: Optional[Dict[str, Any]] = None,
-        n_gen: int = 200,
-        seed: int = 1,
-        verbose: bool = True,
+        **run_config,
     ) -> Dict[str, Any]:
         """
         Run the optimization with the specified algorithm.
@@ -50,13 +48,25 @@ class MultiObjectiveOptimizer:
         Args:
             algorithm_name: Name of the algorithm to use
             algorithm_params: Parameters for the algorithm setup
-            n_gen: Number of generations
-            seed: Random seed for reproducibility
-            verbose: Whether to print progress information
+            **run_config: Additional configuration parameters:
+                n_gen: Number of generations (default: 200)
+                seed: Random seed for reproducibility (default: 1)
+                verbose: Whether to print progress information (default: True)
 
         Returns:
             Dictionary containing optimization results
         """
+        # Default run configuration
+        default_config = {
+            "n_gen": 200,
+            "seed": 1,
+            "verbose": True,
+        }
+
+        # Update with user provided config
+        config = default_config.copy()
+        config.update(run_config)
+
         # Store algorithm configuration for reference
         self._last_algorithm_name = algorithm_name
         self._last_algorithm_params = algorithm_params or {}
@@ -67,13 +77,17 @@ class MultiObjectiveOptimizer:
 
         # Run the optimization
         result = minimize(
-            self.problem, algorithm, ("n_gen", n_gen), seed=seed, verbose=verbose
+            self.problem,
+            algorithm,
+            ("n_gen", config["n_gen"]),
+            seed=config["seed"],
+            verbose=config["verbose"],
         )
 
         # Store and process the result
         self.result_handler.set_result(result)
         return self.result_handler.create_result_summary(
-            algorithm_instance.get_name(), n_gen
+            algorithm_instance.get_name(), config["n_gen"]
         )
 
     def get_pareto_solutions(

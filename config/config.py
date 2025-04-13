@@ -12,6 +12,7 @@ class ConfigManager:
     """
 
     _instance = None
+    _initialized = False
 
     def __new__(cls, config_path: Optional[str] = None):
         """

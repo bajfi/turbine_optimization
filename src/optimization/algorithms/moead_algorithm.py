@@ -4,6 +4,7 @@ from pymoo.algorithms.moo.moead import MOEAD
 from pymoo.operators.crossover.sbx import SBX
 from pymoo.operators.mutation.pm import PM
 from pymoo.operators.sampling.rnd import IntegerRandomSampling
+from pymoo.util.ref_dirs import get_reference_directions
 
 from .base_algorithm import OptimizationAlgorithm
 
@@ -62,8 +63,6 @@ class MOEADAlgorithm(OptimizationAlgorithm):
         params.update(kwargs)
 
         # Create reference directions using Das and Dennis's systematic approach
-        from pymoo.util.ref_dirs import get_reference_directions
-
         n_obj = kwargs.get("n_obj", 2)  # Default to 2 objectives if not specified
         ref_dirs = get_reference_directions("das-dennis", n_obj, n_partitions=12)
 

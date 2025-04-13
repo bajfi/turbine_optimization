@@ -1,6 +1,3 @@
-from pathlib import Path
-from typing import Optional, Tuple
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -17,28 +14,20 @@ class ParetoVisualizer:
     """
 
     @staticmethod
-    def plot_pareto_front(
-        F: np.ndarray,
-        title: str = "Pareto Front",
-        x_label: str = "f₁",
-        y_label: str = "f₂",
-        save_path: Optional[str | Path] = None,
-        show_plot: bool = True,
-        figsize: Tuple[int, int] = (12, 9),
-        dpi: int = 300,
-    ) -> plt.Figure:
+    def plot_pareto_front(F: np.ndarray, **config) -> plt.Figure:
         """
         Plot the Pareto front for a bi-objective optimization problem.
 
         Args:
             F: Objective values, shape (n_solutions, 2)
-            title: Plot title
-            x_label: Label for x-axis
-            y_label: Label for y-axis
-            save_path: Path to save the figure
-            show_plot: Whether to show the plot
-            figsize: Figure size
-            dpi: DPI for saved figure
+            **config: Visualization configuration including:
+                title: Plot title (default: "Pareto Front")
+                x_label: Label for x-axis (default: "f₁")
+                y_label: Label for y-axis (default: "f₂")
+                save_path: Path to save the figure (default: None)
+                show_plot: Whether to show the plot (default: True)
+                figsize: Figure size (default: (12, 9))
+                dpi: DPI for saved figure (default: 300)
 
         Returns:
             The matplotlib figure
@@ -46,8 +35,23 @@ class ParetoVisualizer:
         if F.shape[1] != 2:
             raise ValueError("This function can only plot 2D Pareto fronts")
 
+        # Default configuration
+        default_config = {
+            "title": "Pareto Front",
+            "x_label": "f₁",
+            "y_label": "f₂",
+            "save_path": None,
+            "show_plot": True,
+            "figsize": (12, 9),
+            "dpi": 300,
+        }
+
+        # Update with user provided config
+        viz_config = default_config.copy()
+        viz_config.update(config)
+
         # Create figure
-        fig, ax = plt.subplots(figsize=figsize)
+        fig, ax = plt.subplots(figsize=viz_config["figsize"])
 
         # Scatter plot of all solutions
         ax.scatter(
@@ -82,9 +86,9 @@ class ParetoVisualizer:
             )
 
         # Improve styling
-        ax.set_xlabel(x_label, fontsize=14)
-        ax.set_ylabel(y_label, fontsize=14)
-        ax.set_title(title, fontsize=16)
+        ax.set_xlabel(viz_config["x_label"], fontsize=14)
+        ax.set_ylabel(viz_config["y_label"], fontsize=14)
+        ax.set_title(viz_config["title"], fontsize=16)
         ax.grid(True, linestyle="--", alpha=0.7)
         ax.legend(fontsize=12, loc="best")
 
@@ -105,40 +109,33 @@ class ParetoVisualizer:
         plt.tight_layout()
 
         # Save figure if requested
-        if save_path:
-            plt.savefig(save_path, dpi=dpi, bbox_inches="tight")
+        if viz_config["save_path"]:
+            plt.savefig(
+                viz_config["save_path"], dpi=viz_config["dpi"], bbox_inches="tight"
+            )
 
         # Show plot if requested
-        if show_plot:
+        if viz_config["show_plot"]:
             plt.show()
 
         return fig
 
     @staticmethod
-    def plot_interpolated_pareto_front(
-        F: np.ndarray,
-        num_points: int = 200,
-        title: str = "Interpolated Pareto Front",
-        x_label: str = "f₁",
-        y_label: str = "f₂",
-        save_path: Optional[str | Path] = None,
-        show_plot: bool = True,
-        figsize: Tuple[int, int] = (12, 9),
-        dpi: int = 300,
-    ) -> plt.Figure:
+    def plot_interpolated_pareto_front(F: np.ndarray, **config) -> plt.Figure:
         """
         Plot an interpolated Pareto front.
 
         Args:
             F: Objective values, shape (n_solutions, 2)
-            num_points: Number of points to use for interpolation
-            title: Plot title
-            x_label: Label for x-axis
-            y_label: Label for y-axis
-            save_path: Path to save the figure
-            show_plot: Whether to show the plot
-            figsize: Figure size
-            dpi: DPI for saved figure
+            **config: Visualization configuration including:
+                num_points: Number of points to use for interpolation (default: 200)
+                title: Plot title (default: "Interpolated Pareto Front")
+                x_label: Label for x-axis (default: "f₁")
+                y_label: Label for y-axis (default: "f₂")
+                save_path: Path to save the figure (default: None)
+                show_plot: Whether to show the plot (default: True)
+                figsize: Figure size (default: (12, 9))
+                dpi: DPI for saved figure (default: 300)
 
         Returns:
             The matplotlib figure
@@ -146,8 +143,24 @@ class ParetoVisualizer:
         if F.shape[1] != 2:
             raise ValueError("This function can only plot 2D Pareto fronts")
 
+        # Default configuration
+        default_config = {
+            "num_points": 200,
+            "title": "Interpolated Pareto Front",
+            "x_label": "f₁",
+            "y_label": "f₂",
+            "save_path": None,
+            "show_plot": True,
+            "figsize": (12, 9),
+            "dpi": 300,
+        }
+
+        # Update with user provided config
+        viz_config = default_config.copy()
+        viz_config.update(config)
+
         # Create figure
-        fig, ax = plt.subplots(figsize=figsize)
+        fig, ax = plt.subplots(figsize=viz_config["figsize"])
 
         # Scatter plot of all solutions
         ax.scatter(
@@ -177,7 +190,7 @@ class ParetoVisualizer:
 
         # Create interpolated Pareto front
         x_interp, y_interp = interpolate_pareto_front(
-            x_pareto, y_pareto, num_points=num_points
+            x_pareto, y_pareto, num_points=viz_config["num_points"]
         )
 
         # Plot interpolated Pareto front
@@ -186,24 +199,26 @@ class ParetoVisualizer:
             y_interp,
             color="green",
             linewidth=2.5,
-            label=f"Interpolated Pareto front ({num_points} points)",
+            label=f"Interpolated Pareto front ({viz_config['num_points']} points)",
         )
 
         # Improve styling
-        ax.set_xlabel(x_label, fontsize=14)
-        ax.set_ylabel(y_label, fontsize=14)
-        ax.set_title(title, fontsize=16)
+        ax.set_xlabel(viz_config["x_label"], fontsize=14)
+        ax.set_ylabel(viz_config["y_label"], fontsize=14)
+        ax.set_title(viz_config["title"], fontsize=16)
         ax.grid(True, linestyle="--", alpha=0.7)
         ax.legend(fontsize=12, loc="best")
 
         plt.tight_layout()
 
         # Save figure if requested
-        if save_path:
-            plt.savefig(save_path, dpi=dpi, bbox_inches="tight")
+        if viz_config["save_path"]:
+            plt.savefig(
+                viz_config["save_path"], dpi=viz_config["dpi"], bbox_inches="tight"
+            )
 
         # Show plot if requested
-        if show_plot:
+        if viz_config["show_plot"]:
             plt.show()
 
         return fig
