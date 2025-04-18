@@ -1,4 +1,5 @@
 from .base_model import BaseModel
+from .gaussian_process import GaussianProcessModel
 from .gradient_boosting import GradientBoostingModel
 from .model_factory import ModelFactory
 from .neural_network import NeuralNetworkModel
@@ -14,6 +15,7 @@ __all__ = [
     "SVRModel",
     "NeuralNetworkModel",
     "XGBoostModel",
+    "GaussianProcessModel",
     "get_available_models",
     "create_model",
     "register_model",

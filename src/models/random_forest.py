@@ -19,6 +19,11 @@ class RandomForestModel(BaseModel):
 
         Args:
             n_estimators: Number of trees in the forest
+            max_depth: Maximum depth of the trees
+            min_samples_split: Minimum number of samples required to split an internal node
+            min_samples_leaf: Minimum number of samples required to be at a leaf node
+            max_features: Number of features to consider when looking for the best split
+            bootstrap: Whether bootstrap samples are used when building trees
             random_state: Random seed for reproducibility
             **kwargs: Additional parameters to pass to RandomForestRegressor
         """
@@ -58,11 +63,13 @@ class RandomForestModel(BaseModel):
         """
         return {
             "n_estimators": 100,
-            "random_state": 42,
-            "max_depth": 10,
+            "max_depth": None,
             "min_samples_split": 2,
             "min_samples_leaf": 1,
-            "n_jobs": -1,
+            "max_features": "sqrt",
+            "bootstrap": True,
+            "n_jobs": -1,  # Use all available cores
+            "random_state": 42,
             "verbose": 0,
         }
 
@@ -86,7 +93,6 @@ class RandomForestModel(BaseModel):
         """
         self.model.set_params(**params)
 
-    @override
     def get_feature_importances(self) -> np.ndarray:
         """
         Get feature importances from the trained model.

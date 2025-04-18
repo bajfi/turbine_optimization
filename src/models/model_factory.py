@@ -1,6 +1,7 @@
 from typing import Dict, Type
 
 from src.models.base_model import BaseModel
+from src.models.gaussian_process import GaussianProcessModel
 from src.models.gradient_boosting import GradientBoostingModel
 from src.models.neural_network import NeuralNetworkModel
 from src.models.random_forest import RandomForestModel
@@ -20,6 +21,7 @@ class ModelFactory:
         "svr": SVRModel,
         "neural_network": NeuralNetworkModel,
         "xgboost": XGBoostModel,
+        "gaussian_process": GaussianProcessModel,
         # Add more model types here as they are implemented
     }
 

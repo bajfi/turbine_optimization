@@ -1,16 +1,17 @@
 import pickle
 from pathlib import Path
-from typing import Any, Dict, Tuple, override
+from typing import Any, Dict, override
 
 import numpy as np
 from sklearn.neural_network import MLPRegressor
+from sklearn.preprocessing import StandardScaler
 
 from src.models.base_model import BaseModel
 
 
 class NeuralNetworkModel(BaseModel):
     """
-    Neural Network regression model implementation using scikit-learn MLPRegressor.
+    Neural Network regression model implementation using scikit-learn's MLPRegressor.
     """
 
     def __init__(self, **kwargs):
@@ -18,8 +19,8 @@ class NeuralNetworkModel(BaseModel):
         Initialize the Neural Network model.
 
         Args:
-            hidden_layer_sizes: The sizes of hidden layers
-            activation: Activation function for the hidden layers
+            hidden_layer_sizes: The size of hidden layers
+            activation: Activation function
             solver: The solver for weight optimization
             alpha: L2 penalty parameter
             learning_rate: Learning rate schedule
@@ -28,41 +29,10 @@ class NeuralNetworkModel(BaseModel):
             **kwargs: Additional parameters to pass to MLPRegressor
         """
         params = self.default_params
-
-        # Convert hidden_layer_sizes if provided in kwargs
-        if "hidden_layer_sizes" in kwargs:
-            kwargs["hidden_layer_sizes"] = self._convert_hidden_layer_sizes(
-                kwargs["hidden_layer_sizes"]
-            )
-
-        # Update with provided parameters
         params.update(kwargs)
-
         self.model = MLPRegressor(**params)
-
-    @staticmethod
-    def _convert_hidden_layer_sizes(hidden_sizes: Any) -> Tuple[int, ...]:
-        """
-        Convert various formats of hidden_layer_sizes to the tuple format required by MLPRegressor.
-
-        Args:
-            hidden_sizes: Hidden layer sizes in various formats (string, list, tuple)
-
-        Returns:
-            Tuple of integers representing hidden layer sizes
-        """
-        if isinstance(hidden_sizes, str):
-            # Handle string format like "(100, 50)"
-            if hidden_sizes.startswith("(") and hidden_sizes.endswith(")"):
-                return tuple(int(x.strip()) for x in hidden_sizes[1:-1].split(","))
-            # Handle other string formats if needed
-
-        # Convert list or numpy array to tuple
-        if isinstance(hidden_sizes, (list, np.ndarray)):
-            return tuple(hidden_sizes)
-
-        # Already a tuple or other format
-        return hidden_sizes
+        self.scaler = StandardScaler()
+        self._is_fitted = False
 
     @override
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
@@ -73,7 +43,10 @@ class NeuralNetworkModel(BaseModel):
             X: Feature matrix of shape (n_samples, n_features)
             y: Target vector of shape (n_samples,)
         """
-        self.model.fit(X, y)
+        # Scale features for better convergence
+        X_scaled = self.scaler.fit_transform(X)
+        self.model.fit(X_scaled, y)
+        self._is_fitted = True
 
     @override
     def predict(self, X: np.ndarray) -> np.ndarray:
@@ -86,7 +59,12 @@ class NeuralNetworkModel(BaseModel):
         Returns:
             Predicted values of shape (n_samples,)
         """
-        return self.model.predict(X)
+        if not self._is_fitted:
+            raise ValueError("Model must be fitted before making predictions")
+
+        # Scale features using the same scaler used during training
+        X_scaled = self.scaler.transform(X)
+        return self.model.predict(X_scaled)
 
     @override
     @property
@@ -106,11 +84,11 @@ class NeuralNetworkModel(BaseModel):
             "learning_rate": "adaptive",
             "learning_rate_init": 0.001,
             "max_iter": 500,
-            "shuffle": True,
-            "random_state": 42,
+            "early_stopping": True,
+            "validation_fraction": 0.1,
             "tol": 1e-4,
-            "verbose": False,
-            "early_stopping": False,
+            "random_state": 42,
+            "verbose": 0,
         }
 
     @override
@@ -131,26 +109,18 @@ class NeuralNetworkModel(BaseModel):
         Args:
             **params: Model parameters
         """
-        # Handle hidden_layer_sizes conversion
-        if "hidden_layer_sizes" in params:
-            params["hidden_layer_sizes"] = self._convert_hidden_layer_sizes(
-                params["hidden_layer_sizes"]
-            )
-
         self.model.set_params(**params)
 
-    @override
     def get_feature_importances(self) -> np.ndarray:
         """
         Get feature importances from the trained model.
-        Note: MLPRegressor does not provide feature importances directly.
-        This implementation returns the absolute values of the weights
-        from the first layer as a rough approximation of feature importance.
+        For neural networks, we approximate importance using the magnitudes of weights
+        in the first layer.
 
         Returns:
             Array of feature importances
         """
-        if not hasattr(self.model, "coefs_"):
+        if not hasattr(self.model, "coefs_") or len(self.model.coefs_) == 0:
             raise ValueError("Model has not been trained yet")
 
         # Use first layer weights as feature importance approximation
@@ -168,8 +138,16 @@ class NeuralNetworkModel(BaseModel):
         if directory and not directory.exists():
             directory.mkdir(parents=True)
 
+        # Save both the model and the scaler
         with open(file_path, "wb") as f:
-            pickle.dump(self.model, f)
+            pickle.dump(
+                {
+                    "model": self.model,
+                    "scaler": self.scaler,
+                    "is_fitted": self._is_fitted,
+                },
+                f,
+            )
 
     @override
     def load_model(self, file_path: str | Path) -> None:
@@ -183,4 +161,7 @@ class NeuralNetworkModel(BaseModel):
             raise FileNotFoundError(f"Model file not found: {file_path}")
 
         with open(file_path, "rb") as f:
-            self.model = pickle.load(f)
+            saved_data = pickle.load(f)
+            self.model = saved_data["model"]
+            self.scaler = saved_data["scaler"]
+            self._is_fitted = saved_data["is_fitted"]
