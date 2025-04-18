@@ -5,7 +5,6 @@ from typing import Any, Dict, override
 import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel, Matern, WhiteKernel
-
 from src.models.base_model import BaseModel
 
 
@@ -53,22 +52,21 @@ class GaussianProcessModel(BaseModel):
 
         if kernel_name == "rbf":
             return RBF(length_scale=1.0)
-        elif kernel_name == "matern":
+        if kernel_name == "matern":
             return Matern(length_scale=1.0, nu=2.5)
-        elif kernel_name == "constant":
+        if kernel_name == "constant":
             return ConstantKernel(1.0)
-        elif kernel_name == "white":
+        if kernel_name == "white":
             return WhiteKernel(noise_level=0.1)
-        elif kernel_name == "rq":
+        if kernel_name == "rq":
             # Combination of kernels to approximate Rational Quadratic
             return ConstantKernel(1.0) * RBF(length_scale=1.0)
-        elif kernel_name == "default":
+        if kernel_name == "default":
             # Default kernel from default_params
             return ConstantKernel(1.0) * Matern(length_scale=1.0, nu=2.5) + WhiteKernel(
                 noise_level=0.1
             )
-        else:
-            raise ValueError(f"Unknown kernel name: {kernel_name}")
+        raise ValueError(f"Unknown kernel name: {kernel_name}")
 
     @override
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
@@ -190,4 +188,5 @@ class GaussianProcessModel(BaseModel):
             raise FileNotFoundError(f"Model file not found: {file_path}")
 
         with open(file_path, "rb") as f:
+            self.model = pickle.load(f)
             self.model = pickle.load(f)
